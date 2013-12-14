@@ -1,0 +1,25 @@
+#!/bin/bash
+export LANG="en_US.UTF-8"
+# it takes
+# - sources in src directory and put them in rpmbuild/SOURCES
+# - *.spec file and copy it to rpmbuild/SPECS
+spec=`ls | grep .spec`
+RPMDIR=$1/rpmbuild
+SPECFILE=${RPMDIR}/SPECS/$spec
+
+rm -fr ${RPMDIR}
+rm -fr ~/.rpmmacros
+mkdir -p ${RPMDIR}/{BUILD,RPMS/{i386,i686,noarch},SOURCES,SPECS,SRPMS}
+cat > ~/.rpmmacros << EOF
+%_topdir      ${RPMDIR}
+%_smp_mflags  -j3
+EOF
+
+rsync -avC src/* ${RPMDIR}/SOURCES
+cp *.spec ${RPMDIR}/SPECS
+
+sed -i "s/<%Date%>/`date +'%a %b %d %Y'`/g" ${SPECFILE}
+#rpmbuild --target x86_64 -ba --clean ${SPECFILE}
+#rpmbuild --target i686 -ba --clean ${SPECFILE}
+rpmbuild -ba --clean ${SPECFILE}
+
